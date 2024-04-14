@@ -9,6 +9,7 @@ import java.util.Scanner;
 public class main {
     static public Scanner input = new Scanner(System.in);
     static private int currentUser = -1;
+
     static private UserType currentUserType = UserType.NOT_SIGNED_IN;
     static public enum UserType {ADMIN, TRAINER, MEMBER, NOT_SIGNED_IN};
     public static boolean signInUser(){
@@ -76,7 +77,22 @@ public class main {
         return -1;
     }
 
-    public static void manageMemberSchedule(){
+    public static void updateUserPassword() {
+        input.nextLine();
+        System.out.println("Please enter new password: ");
+        String new_password = input.nextLine();
+        while(new_password.isEmpty()) {
+            System.out.println("Password can't be empty!");
+            new_password = input.nextLine();
+        }
+        boolean success =  queries.updatePassword(currentUser, new_password);
+        if(success) {
+            System.out.println("Password updated!");
+            return;
+        }
+        System.out.println("Password reset unsuccessful!");
+    }
+    public static void viewMemberSchedule(){
         input.nextLine();
         System.out.println("Your upcoming events are: ");
         System.out.println("Training Sessions: ");
@@ -89,7 +105,7 @@ public class main {
                 Date sessionDate = upcomingSessions.getDate("session_date");
                 Time fromTime = upcomingSessions.getTime("session_start");
                 Time toTime = upcomingSessions.getTime("session_end");
-                System.out.println("Session ID: " + session_id + " with Trainer: " + trainer_name + "When: " + sessionDate + " from " + fromTime + " to " +toTime);
+                System.out.println("Session ID: " + session_id + " with Trainer: " + trainer_name + "Trainer_id: "+ trainer_id + sessionDate + " from " + fromTime + " to " +toTime);
             }
         }
         catch(Exception e){
@@ -117,7 +133,56 @@ public class main {
             System.out.println("Unknown error occurred "+ e);
             return;
         }
-        //TODO: Add functionality to display options to add classes, remove classes, add training sessions and remove training sessions
+    }
+
+    public static void dropClass(){
+        input.nextLine();
+        System.out.println("Please enter the Class ID of the class you wish to cancel: ");
+        int class_id = input.nextInt();
+        System.out.println("Do you wish to cancel attendance for all future instances of this class? y/n");
+        if(input.nextLine().trim().equalsIgnoreCase("y")){
+            if(queries.dropOut(class_id, currentUser)){
+                System.out.println("Dropped out class!");
+            }
+            else{
+                System.out.println("Unable to remove you from future classes");
+            }
+            return;
+        }
+        System.out.println("Please enter the attendance id of the class instance you want to cancel: ");
+        int attendance_id = input.nextInt();
+        if(queries.cancelOneClass(attendance_id, currentUser)){
+            System.out.println("Cancelled attendance for class "+ attendance_id);
+            return;
+        }
+        System.out.println("Unable to cancel attendance for class "+ attendance_id + ". Please contact admin!");
+        return;
+
+    }
+
+    public static void cancelTrainingSession(){
+        input.nextLine();
+        System.out.println("Please enter the ID of the trainer for the session you wish to cancel: ");
+        int trainer_id = input.nextInt();
+        System.out.println("Do you wish to cancel attendance for all future sessions with this trainer? y/n");
+        if(input.nextLine().trim().equalsIgnoreCase("y")){
+            if(queries.removeTrainingSession(trainer_id, currentUser)){
+                System.out.println("Cancelled all training sessions with trainer " + trainer_id + "!");
+            }
+            else{
+                System.out.println("Unable to cancel future sessions");
+            }
+            return;
+        }
+        System.out.println("Please enter the session id of the session you want to cancel: ");
+
+        int session_id = input.nextInt();
+        if(queries.removeTrainingSession(session_id)){
+            System.out.println("Cancelled session "+ session_id);
+            return;
+        }
+        System.out.println("Unable to cancel session  "+ session_id + ". Please contact admin or the trainer!");
+        return;
     }
 
     public static boolean registerNewMember(){
@@ -209,12 +274,133 @@ public class main {
         queries.updateMetrics(currentUser, height, weight, goalDesc, goalWeight,checkin_date);
     }
 
+    static public void addClass(){
+        input.nextLine();
+        System.out.println("Would you like to view upcoming classes? y/n");
+        if(input.nextLine().trim().equalsIgnoreCase("y")){
+            try {
+                ResultSet classes = queries.viewUpcomingClasses();
+                while (classes.next()) {
+                    int class_id = classes.getInt("class_id");
+                    int trainer_id = classes.getInt("trainer_id");
+                    String class_desc = classes.getString("class_description");
+                    Date class_date = classes.getDate("class_date");
+                    Time start_time = classes.getTime("start_time");
+                    Time end_time = classes.getTime("end_time");
+                    float cost = classes.getFloat("cost");
+                    int difficulty = classes.getInt("difficulty");
+
+                    System.out.println("class_id: " + class_id + ", trainer_id: " + trainer_id + ", class_description: " + class_desc +
+                            ", class_date: " + class_date + ", start_time: " + start_time + ", end_time: " + end_time +
+                            ", cost: " + cost + ", difficulty: " + difficulty);
+                }
+            }
+            catch (Exception e){
+                System.out.println("An unknown error occurred!");
+                return;
+            }
+
+        }
+        System.out.println("Please enter the ID of the class you would like to enroll in (Please enter -1 if you no longer which to add a class)");
+        int desired_class = input.nextInt();
+        if(desired_class == -1) return;
+        queries.enrollInClass(desired_class, currentUser);
+        float cost = queries.getClassCost(desired_class);
+        queries.generateBill(currentUser, cost, "Class cost for class  "+ desired_class);
+
+
+    }
+
+    static public void addTrainingSession(){
+        input.nextLine();
+        System.out.println("Would you like to view all available trainers? y/n");
+        if(input.nextLine().trim().equalsIgnoreCase("y")){
+            try {
+                ResultSet classes = queries.getAllTrainersAvailability();
+                while (classes.next()) {
+                    int availability_id = classes.getInt("availability_id");
+                    int trainer_id = classes.getInt("trainer_id");
+                    Date class_date = classes.getDate("available_date");
+                    Time start_time = classes.getTime("startTime");
+                    Time end_time = classes.getTime("endTime");
+
+
+                    System.out.println("availability_id: " + availability_id + ", trainer_id: " + trainer_id + ", available_date: " + class_date +
+                            ", start_time: " + start_time + ", end_time: " + end_time);
+
+
+                }
+
+                System.out.println("Please enter the availability id of the session you would like to book (-1 if you no longer wish to book): ");
+                int option = input.nextInt();
+                if(option== -1) return;
+                ResultSet rs = queries.removeAvailability(option);
+                if (rs.next()){
+                    int trainer_id = rs.getInt("trainer_id");
+                    Date date = rs.getDate("available_date");
+                    Time start = rs.getTime("startTime");
+                    Time end = rs.getTime("endTime");
+                    queries.addTrainingSession(currentUser, trainer_id,date, start, end);
+                    float cost = queries.getTrainerHourly(trainer_id);
+                    queries.generateBill(currentUser, cost, "Training Session with trainer "+ trainer_id);
+                    return;
+                }
+
+            }
+            catch (Exception e){
+                System.out.println("An unknown error occurred!");
+                return;
+            }
+
+        }
+
+    }
+
+    public static void viewBills(){
+        try {
+            // Iterate through the ResultSet and print each bill
+            ResultSet bills = queries.getMemberBills(currentUser);
+            while (bills.next()) {
+                int billId = bills.getInt("bill_id");
+                float billAmount = bills.getFloat("bill_amount");
+                float amountPaid = bills.getFloat("amount_paid");
+                String paymentMethod = bills.getString("payment_method");
+                String billDescription = bills.getString("bill_description");
+                Date billDate = bills.getDate("bill_date");
+                Date datePaid = bills.getDate("date_paid");
+
+                // Print the bill details
+                System.out.println("Bill ID: " + billId);
+                System.out.println("Amount: " + billAmount);
+                System.out.println("Amount Paid: " + amountPaid);
+                System.out.println("Payment Method: " + paymentMethod);
+                System.out.println("Description: " + billDescription);
+                System.out.println("Bill Date: " + billDate);
+                System.out.println("Date Paid: " + datePaid);
+                System.out.println("---------------------------------");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void payBill(){
+        input.nextLine();
+        System.out.println("Please input the bill id you wish to pay: ");
+        int bill_id = input.nextInt();
+        System.out.println("Please enter the amount you wish to pay: ");
+        float amount = input.nextFloat();
+        System.out.println("Please enter your visa card number: ");
+        input.nextLine();
+        queries.payBill(bill_id, amount, "VISA");
+    }
+
     public static void main(String[] args){
 
 
         String first_name = null, last_name= null, email = null, phone = null;
         System.out.println("Welcome to the FitnessClub! \n");
-        enum menu {LOGIN_MENU, MEMBER_OPTIONS, TRAINER_OPTIONS, ADMIN_OPTIONS, MEMBER_SCHEDULE, TRAINER_SCHEDULE};
+        enum menu {LOGIN_MENU, MEMBER_OPTIONS, TRAINER_OPTIONS, ADMIN_OPTIONS, MEMBER_SCHEDULE, MEMBER_BILLING, TRAINER_SCHEDULE};
         menu currentMenu = menu.LOGIN_MENU;
         while(true){
 
@@ -243,6 +429,7 @@ public class main {
                         case 2:
                             if(registerNewMember()){
                                 currentMenu = menu.MEMBER_OPTIONS;
+                                break;
                             }
                             break;
                     }
@@ -273,7 +460,8 @@ public class main {
                                         "3. Update Metrics and Goals\n"+
                                         "4. Manage Schedule\n" +
                                         "5. Update password\n" +
-                                        "6. Log Out");
+                                        "6. Log Out\n" +
+                                        "7. Manage bills");
                     option = 0;
                     option = input.nextInt();
                     switch(option){
@@ -289,10 +477,83 @@ public class main {
                             updateMetricsAndGoals();
                             break;
                         case 4:
-                            manageMemberSchedule();
+                            currentMenu = menu.MEMBER_SCHEDULE;
+                            break;
+                        case 5:
+                            updateUserPassword();
+                            break;
+                        case 6:
+                            currentUser = -1;
+                            currentUserType = null;
+                            currentMenu = menu.LOGIN_MENU;
+                            break;
+                        case 7:
+                            currentMenu = menu.MEMBER_BILLING;
+                            break;
                     }
+                    break;
+                case MEMBER_SCHEDULE:
+
+                    viewMemberSchedule();
+
+                    System.out.println("Please select an option:\n" +
+                                        "1. Cancel a class\n" +
+                                        "2. Cancel a training Session\n" +
+                                        "3. Add a class\n" +
+                                        "4. Add a training session\n" +
+                                        "5. Go back\n" +
+                                        "0. Quit");
+
+                    option = 0;
+                    option = input.nextInt();
+
+                    switch(option){
+                        case 1:
+                            dropClass();
+                            break;
+                        case 2:
+                            cancelTrainingSession();
+                            break;
+                        case 3:
+                            addClass();
+                            break;
+                        case 4:
+                            addTrainingSession();
+                            break;
+                        case 5:
+                            currentMenu = menu.MEMBER_OPTIONS;
+                            break;
+                        case 0:
+                            return;
+                    }
+                    break;
+                case MEMBER_BILLING:
+                    System.out.println("IF you would like a refund please speak to admin");
+                    System.out.println("Please select an option:" +
+                                        "0. Quit\n" +
+                                        "1. Go back \n" +
+                                        "2. ViewBills \n" +
+                                        "3. Pay bill");
+                    int billing_opt = input.nextInt();
+                    switch(billing_opt){
+                        case 0:
+                            return;
+                        case 1:
+                            currentMenu = menu.MEMBER_OPTIONS;
+                            break;
+                        case 2:
+                            viewBills();
+                            break;
+                        case 3:
+                            payBill();
+                            break;
+                    }
+
+
             }
         }
+
+//
 
 
         //input.close();

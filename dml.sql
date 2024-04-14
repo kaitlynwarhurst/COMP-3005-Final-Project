@@ -79,6 +79,9 @@ INSERT INTO ExcersizeRoutines (member_id, workout_id) VALUES
 
 -- Dummy data for TrainerAvailability with random dates within a range of one month
 INSERT INTO TrainerAvailability (trainer_id, available_date, startTime, endTime) VALUES
+(6, CURRENT_DATE + INTERVAL '3 days', '09:00:00', '17:00:00'),
+(8, CURRENT_DATE + INTERVAL '7 days', '08:00:00', '16:00:00'),
+(9, CURRENT_DATE + INTERVAL '2 days', '10:00:00', '18:00:00'),
 (6, CURRENT_DATE - INTERVAL '3 days', '09:00:00', '17:00:00'),
 (8, CURRENT_DATE - INTERVAL '7 days', '08:00:00', '16:00:00'),
 (9, CURRENT_DATE - INTERVAL '2 days', '10:00:00', '18:00:00');
