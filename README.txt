@@ -5,6 +5,10 @@ QUERIES IS COMPLETE AND HAS ALL THE QUERIES THAT WOULD BE NEEDED.
 
 Code is in FinalProjV2 and should be loaded into intellegji to run properly. Please modify the needed settings if your database does not use the defaults.
 
+Create database and call it FitnessClubDatabase
+Create the tables by copying the ddl code and copying it into the query tool for the database and run it.
+Populate the tables by copying the dml into the query tool and running it.
+
 queries.java - 
 	Currently set to have default url, user and password to connect to the database- these values need to be changed if you are not using default values- can be done by just setting static variables at the top of the class
 
