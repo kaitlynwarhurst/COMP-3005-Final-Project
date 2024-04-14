@@ -1,5 +1,8 @@
 README:
 
+UNFORTUNATELY RAN OUT OF TIME TO COMPLETE_ SO ONLY MEMBER UI IMPLEMENTATION IS DONE.
+QUERIES IS COMPLETE AND HAS ALL THE QUERIES THAT WOULD BE NEEDED. 
+
 queries.java - 
 	Currently set to have default url, user and password to connect to the database- these values need to be changed if you are not using default values- can be done by just setting static variables at the top of the class
 
