@@ -6,7 +6,7 @@ public class queries {
     //    All of below must be updated for specific database - currently its the defaults
     static String url = "jdbc:postgresql://localhost:5432/FitnessClubDatabase";
     static String user = "postgres";
-    static String password = "3rag0n";
+    static String password = "Admin";
 
     public static boolean registerNewUser(String first_name, String last_name, String email, String phone, String userPword){
 
